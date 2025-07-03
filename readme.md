@@ -46,12 +46,6 @@ Use **three separate terminals** to execute the following commands:
    ./build/subscriber -DCPSConfigFile ../rtps.ini
    ```
 
-## Additional Information
-
-- Ensure that `$DDS_ROOT` points to your OpenDDS installation directory.
-- The publisher sends 10 messages, one per second.
-- The subscriber logs each received message to the console.
-
 ---
 
 This example is designed for educational purposes and to explore OpenDDS Pub/Sub functionality.
