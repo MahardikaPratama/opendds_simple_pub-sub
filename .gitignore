@@ -1,0 +1,5 @@
+build/*
+SmartCityTemperature*
+!SmartCityTemperature.idl
+repo.ior
+.vscode/
