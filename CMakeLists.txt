@@ -1,52 +1,63 @@
 cmake_minimum_required(VERSION 3.10)
-project(DDS_PubSub)
+project(open_dds_qos LANGUAGES CXX)
 
-configure_file(SmartCityTemperature.idl ${CMAKE_CURRENT_BINARY_DIR}/SmartCityTemperature.idl COPYONLY)
-configure_file(DataReaderListener.cpp ${CMAKE_CURRENT_BINARY_DIR}/DataReaderListener.cpp COPYONLY)
-configure_file(DataReaderListener.h ${CMAKE_CURRENT_BINARY_DIR}/DataReaderListener.h COPYONLY)
-
+enable_testing()
 find_package(OpenDDS REQUIRED)
+include(opendds_testing)
 
+# -------------------------------
+# IDL: Generate TypeSupport files
+# -------------------------------
 set(IDL_NAME SmartCityTemperature)
 
-set(GENERATED_SRCS
-    ${CMAKE_CURRENT_BINARY_DIR}/${IDL_NAME}C.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/${IDL_NAME}C.h
-    ${CMAKE_CURRENT_BINARY_DIR}/${IDL_NAME}S.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/${IDL_NAME}S.h
-    ${CMAKE_CURRENT_BINARY_DIR}/${IDL_NAME}TypeSupport.idl
-    ${CMAKE_CURRENT_BINARY_DIR}/${IDL_NAME}TypeSupportC.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/${IDL_NAME}TypeSupportC.h
-    ${CMAKE_CURRENT_BINARY_DIR}/${IDL_NAME}TypeSupportImpl.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/${IDL_NAME}TypeSupportImpl.h
-    ${CMAKE_CURRENT_BINARY_DIR}/${IDL_NAME}TypeSupportS.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/${IDL_NAME}TypeSupportS.h
+# Generate source/header from IDL
+add_library(${IDL_NAME}_idl)
+
+opendds_target_sources(${IDL_NAME}_idl PUBLIC ${IDL_NAME}.idl)
+
+# Include path untuk file hasil generate
+target_include_directories(${IDL_NAME}_idl PUBLIC
+  ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-add_custom_command(
-    OUTPUT ${GENERATED_SRCS}
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/generate_idl ${CMAKE_CURRENT_SOURCE_DIR}/${IDL_NAME}
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${IDL_NAME}.idl
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Generating IDL files for ${IDL_NAME}"
+target_link_libraries(${IDL_NAME}_idl PUBLIC OpenDDS::Dcps)
+
+# -------------------------------
+# Shared Libraries
+# -------------------------------
+set(opendds_libs
+  OpenDDS::Dcps
+  OpenDDS::InfoRepoDiscovery
+  OpenDDS::Tcp
+  OpenDDS::Rtps
+  OpenDDS::Rtps_Udp
+  ${IDL_NAME}_idl
 )
 
-add_custom_target(generate_idl ALL DEPENDS ${GENERATED_SRCS})
-
-
+# -------------------------------
+# Publisher Executable
+# -------------------------------
 add_executable(publisher
-    ${CMAKE_CURRENT_SOURCE_DIR}/publisher.cpp
-    ${GENERATED_SRCS}
-    ${CMAKE_CURRENT_BINARY_DIR}/DataReaderListener.cpp
+  Publisher.cpp
 )
 
-target_include_directories(publisher PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(publisher PRIVATE OpenDDS::Dcps)
+target_link_libraries(publisher PRIVATE ${opendds_libs})
+
+# -------------------------------
+# Subscriber Executable
+# -------------------------------
 add_executable(subscriber
-    ${CMAKE_CURRENT_SOURCE_DIR}/subscriber.cpp
-    ${GENERATED_SRCS}
-    ${CMAKE_CURRENT_BINARY_DIR}/DataReaderListener.cpp
+  Subscriber.cpp
+  DataReaderListenerImpl.cpp
 )
 
-target_include_directories(subscriber PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(subscriber PRIVATE OpenDDS::Dcps)
+target_link_libraries(subscriber PRIVATE ${opendds_libs})
+
+# -------------------------------
+# Test files
+# -------------------------------
+configure_file(run_test.pl . COPYONLY)
+configure_file(rtps.ini . COPYONLY)
+
+opendds_add_test(NAME info_repo COMMAND perl run_test.pl)
+opendds_add_test(NAME rtps COMMAND perl run_test.pl --rtps)

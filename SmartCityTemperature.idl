@@ -1,13 +1,16 @@
-module SmartCity {
+/*
+ * Distributed under the OpenDDS License.
+ * See: http://www.opendds.org/license.html
+ */
 
-    typedef unsigned long long TimeT;
+module SmartCityTemperature {
 
-    @topic
-    struct TemperatureData {
-        @key long id;
-        string city;
-        double temperature;
-        string unit; // e.g., "Celsius" or "Fahrenheit"
-        TimeT timestamp;
-    };
+  @topic
+  struct TemperatureData {
+    string city;
+    string condition;
+    @key long temperature_id;
+    string temperature;
+    long count;
+  };
 };
