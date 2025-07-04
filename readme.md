@@ -38,12 +38,12 @@ Use **three separate terminals** to execute the following commands:
 
 2. **Terminal 2: Start the Publisher**
    ```sh
-   ./build/publisher -DCPSConfigFile ../rtps.ini
+   ./build/publisher -DCPSConfigFile ./rtps.ini
    ```
 
 3. **Terminal 3: Start the Subscriber**
    ```sh
-   ./build/subscriber -DCPSConfigFile ../rtps.ini
+   ./build/subscriber -DCPSConfigFile ./rtps.ini
    ```
 
 ---
